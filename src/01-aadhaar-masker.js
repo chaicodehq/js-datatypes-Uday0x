@@ -29,4 +29,19 @@
  */
 export function maskAadhaar(aadhaarNumber) {
   // Your code here
+  if(typeof aadhaarNumber!="string" || aadhaarNumber.length!=12){
+    return "INVALID"
+  }
+  let regex = /^\d+$/.test(aadhaarNumber)
+  if(!regex){
+    return "INVALID"
+  }
+
+  let string = "XXXX-"
+  let firstmask = string.repeat(2)
+  let visibledigits = aadhaarNumber.slice(-4)
+
+  let final = firstmask.concat("",visibledigits)
+  return final
+
 }
