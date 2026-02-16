@@ -29,4 +29,14 @@
  */
 export function formatChaiMenu(items) {
   // Your code here
+  if(!Array.isArray(items)){
+    return ""
+  }
+
+  let zeroprice = items.filter((i)=>i.price > 0 && i.name!=="" && typeof(i.name)=="string")
+  let upperarray = zeroprice.map((i)=>i.name.toUpperCase()+" - Rs."+i.price)
+  let final = upperarray.join(" | ")
+  return final
+
+  
 }
