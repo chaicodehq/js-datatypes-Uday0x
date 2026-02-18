@@ -31,4 +31,31 @@
  */
 export function fixBollywoodTitle(title) {
   // Your code here
+  if(typeof title!="string"){
+    return ""
+  }
+
+  let trimmedString = title.trim()
+  if(trimmedString == ""){
+    return ""
+  }
+
+  let removingspaces = trimmedString.split(" ")
+  .filter((s)=>s)
+
+  let upperarray = removingspaces.map((i)=>i.charAt(0).toUpperCase()+i.slice(1))
+ 
+  // let capitalSai = upperarray[0].charAt(0).toUpperCase()+upperarray[0].slice(1)
+  
+  let sai = upperarray.map((i)=>{
+     if(i.length<=3){
+      return  i.charAt(0).toLowerCase()+i.slice(1)
+    }else{
+        return i
+    }
+})
+
+let final = sai.join(" ")
+
+return final
 }
