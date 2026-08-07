@@ -21,7 +21,7 @@
  *
  *   Coupon codes (case-insensitive):
  *     - "FIRST50"  => 50% off subtotal, max Rs 150 (use Math.min)
- *     - "FLAT100"  => flat Rs 100 off
+ *         - "FLAT100"  => flat Rs 100 off
  *     - "FREESHIP" => delivery fee becomes 0 (discount = original delivery fee value)
  *     - null/undefined/invalid string => no discount (0)
  *
@@ -54,22 +54,16 @@ export function buildZomatoOrder(cart, coupon) {
 
   let validitems = cart.filter((item)=>item.qty>0)
 
-  let perItemTotal=0
-  let arr =[]
+
  let subtotal = validitems.reduce((gSum,item)=>{
     let base = item.qty * item.price
     
     let addOntotal = item.addons.reduce((sSum,addItem)=>{
         return sSum+Number(addItem.split(":")[1])
     },0)
-    
 
-    perItemTotal = (addOntotal+item.price)*item.qty
-     arr = [item.name,item.qty,item.price,addOntotal,perItemTotal]
-    return base+addOntotal+gSum
+    return base+addOntotal
  },0) 
-
- 
 
  let deliveryFee = 0;
  if(subtotal<500){
@@ -84,15 +78,12 @@ export function buildZomatoOrder(cart, coupon) {
 
  let gst = parseFloat((5 /100) * subtotal.toFixed(2))
  
+ let caseCoupon = coupon.toUpperCase()
+ return caseCoupon
  let couponValue = 0
- let caseCoupon =""
-  if(typeof(coupon)!="string" || coupon == undefined || coupon == null){
-        couponValue = 0
+ if(typeof(caseCoupon)!="string" || caseCoupon == undefined || caseCoupon == null){
+        couponValue = 0   
  }
- 
-   caseCoupon = coupon.toUpperCase()
-
-
  
  if(caseCoupon == "FIRST50"){
     let Value = (50/100) * subtotal
@@ -104,15 +95,13 @@ export function buildZomatoOrder(cart, coupon) {
  }else if(caseCoupon == "FREESHIP"){
     couponValue = deliveryFee
  }
-
-
  let grandTotal = (subtotal + deliveryFee + gst)- couponValue
- return{
-  arr,
-   subtotal,deliveryFee,
+ return{ subtotal,deliveryFee,
     gst,
   discount:couponValue,
     grandTotal
  } 
  
 }
+
+console.log( buildZomatoOrder([{ name: "Biryani", price: 300, qty: 1, addons: ["Raita:30"] }], "flat300"))

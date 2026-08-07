@@ -1,97 +1,100 @@
 /**
- * 💬 WhatsApp Message Parser
+ * 💸 UPI Transaction Log Analyzer
  *
- * Chintu ek WhatsApp chat analyzer bana raha hai. Usse raw WhatsApp
- * exported message line parse karni hai aur usme se date, time, sender,
- * aur message alag alag extract karna hai.
- *
- * WhatsApp export format:
- *   "DD/MM/YYYY, HH:MM - Sender Name: Message text here"
+ * Aaj kal sab UPI pe chalta hai! Tujhe ek month ke transactions ka log
+ * milega, aur tujhe pura analysis karna hai - kitna aaya, kitna gaya,
+ * kiski saath zyada transactions hue, etc.
  *
  * Rules:
- *   - Date extract karo: string ke start se pehle ", " (comma-space) tak
- *   - Time extract karo: ", " ke baad se " - " (space-dash-space) tak
- *   - Sender extract karo: " - " ke baad se pehle ": " (colon-space) tak
- *   - Message text extract karo: pehle ": " ke baad (after sender) sab kuch, trimmed
- *   - wordCount: message ke words count karo (split by space, filter empty strings)
- *   - Sentiment detection (case-insensitive check on message text):
- *     - Agar message mein "😂" ya ":)" ya "haha" hai => sentiment = "funny"
- *     - Agar message mein "❤" ya "love" ya "pyaar" hai => sentiment = "love"
- *     - Otherwise => sentiment = "neutral"
- *     - Agar dono match hote hain, "funny" gets priority
- *   - Hint: Use indexOf(), substring()/slice(), includes(), split(),
- *     trim(), toLowerCase()
+ *   - transactions is array of objects:
+ *     [{ id: "TXN001", type: "credit"/"debit", amount: 500,
+ *        to: "Rahul", category: "food", date: "2025-01-15" }, ...]
+ *   - Skip transactions where amount is not a positive number
+ *   - Skip transactions where type is not "credit" or "debit"
+ *   - Calculate (on valid transactions only):
+ *     - totalCredit: sum of all "credit" type amounts
+ *     - totalDebit: sum of all "debit" type amounts
+ *     - netBalance: totalCredit - totalDebit
+ *     - transactionCount: total number of valid transactions
+ *     - avgTransaction: Math.round(sum of all valid amounts / transactionCount)
+ *     - highestTransaction: the full transaction object with highest amount
+ *     - categoryBreakdown: object with category as key and total amount as value
+ *       e.g., { food: 1500, travel: 800 } (include both credit and debit)
+ *     - frequentContact: the "to" field value that appears most often
+ *       (if tie, return whichever appears first)
+ *     - allAbove100: boolean, true if every valid transaction amount > 100 (use every)
+ *     - hasLargeTransaction: boolean, true if some valid amount >= 5000 (use some)
+ *   - Hint: Use filter(), reduce(), sort(), find(), every(), some(),
+ *     Object.entries(), Math.round(), typeof
  *
  * Validation:
- *   - Agar input string nahi hai, return null
- *   - Agar string mein " - " nahi hai ya ": " nahi hai (after sender), return null
+ *   - Agar transactions array nahi hai ya empty hai, return null
+ *   - Agar after filtering invalid transactions, koi valid nahi bacha, return null
  *
- * @param {string} message - Raw WhatsApp exported message line
- * @returns {{ date: string, time: string, sender: string, text: string, wordCount: number, sentiment: string } | null}
+ * @param {Array<{ id: string, type: string, amount: number, to: string, category: string, date: string }>} transactions
+ * @returns {{ totalCredit: number, totalDebit: number, netBalance: number, transactionCount: number, avgTransaction: number, highestTransaction: object, categoryBreakdown: object, frequentContact: string, allAbove100: boolean, hasLargeTransaction: boolean } | null}
  *
  * @example
- *   parseWhatsAppMessage("25/01/2025, 14:30 - Rahul: Bhai party kab hai? 😂")
- *   // => { date: "25/01/2025", time: "14:30", sender: "Rahul",
- *   //      text: "Bhai party kab hai? 😂", wordCount: 5, sentiment: "funny" }
- *
- *   parseWhatsAppMessage("01/12/2024, 09:15 - Priya: I love this song")
- *   // => { date: "01/12/2024", time: "09:15", sender: "Priya",
- *   //      text: "I love this song", wordCount: 4, sentiment: "love" }
+ *   analyzeUPITransactions([
+ *     { id: "T1", type: "credit", amount: 5000, to: "Salary", category: "income", date: "2025-01-01" },
+ *     { id: "T2", type: "debit", amount: 200, to: "Swiggy", category: "food", date: "2025-01-02" },
+ *     { id: "T3", type: "debit", amount: 100, to: "Swiggy", category: "food", date: "2025-01-03" }
+ *   ])
+ *   // => { totalCredit: 5000, totalDebit: 300, netBalance: 4700,
+ *   //      transactionCount: 3, avgTransaction: 1767,
+ *   //      highestTransaction: { id: "T1", ... },
+ *   //      categoryBreakdown: { income: 5000, food: 300 },
+ *   //      frequentContact: "Swiggy", allAbove100: false, hasLargeTransaction: true }
  */
-export function parseWhatsAppMessage(message) {
+export function analyzeUPITransactions(transactions) {
   // Your code here
-  if(typeof message !="string"){
+  if(!Array.isArray(transactions) || transactions.length == 0){
     return null
   }
+  let validTransactions = transactions.filter((i)=>i.amount >0 && (i.type=="credit" || i.type=="debit"))
 
-  if(!message.includes("-") || !message.includes(":")){
-    return null
+
+
+
+  //sum of all credit type 
+  //since single value we can use reduce
+  let creditAmount =0
+  let debitAmount = 0
+  let credit
+  let debit
+  let loopthrough = validTransactions.reduce((sum,item)=>{
+      if(item.type == "credit"){
+         sum.credit +=  item.amount
+         
+      }
+      if(item.type == "debit"){
+        sum.debit += item.amount
+      }
+      return sum
+
+
+  },{credit:0,debit:0})
+
+
+  let Tcount = validTransactions.length
+
+  let netBalance = loopthrough.credit - loopthrough.debit
+
+  let avgTransaction = validTransactions.reduce((acc,item)=>{
+    let sum = acc+item.amount
+    return sum/Tcount
+  },0)
+  return{
+    loopthrough,
+    netBalance,
+    Tcount,
+    avgTransaction
   }
-
-
-//   let split = message.split(" ")
-//   return split
-
-    let date = message.indexOf(",")
-    let finalDate = message.slice(0,date)
-
-
-    let time = message.indexOf(" - ")
-    let finalTime = message.slice(date+1,time).trim()
-
-    let sender = message.indexOf(": ")
-    let finalSender = message.slice(time+2,sender).trim()
-
-    let FinalMessage = message.slice(sender+1).trim()
-    let wordCheck = FinalMessage.split(" ").filter((s)=>s)
-    let finalWordCount = wordCheck.length
-    let finalWordstring = wordCheck.join(" ").toLowerCase()
-
-
-
-    let sentiment;
-    if(finalWordstring.includes("😂")  || finalWordstring.includes(":)") || finalWordstring.includes("haha")){
-      sentiment ="funny"
-    }
-    else if(finalWordstring.includes("❤")  || finalWordstring.includes("love") || finalWordstring.includes("pyaar")){
-      sentiment ="love"
-    }
-    else{
-      sentiment ="neutral"
-    }
-
-    let finalObject = {
-      date:finalDate,
-      time:finalTime,
-      sender:finalSender,
-      text:finalWordstring,
-      wordCount:finalWordCount,
-      sentiment
-    }
-
-   return finalObject
-
 }
 
-
-console.log(parseWhatsAppMessage("25/01/2025, 14:30 - Rahul: Bhai party kab hai? 😂"))
+console.log(analyzeUPITransactions([
+  {amount:-1,type:"debit"},
+  {amount:10,type:"credit"},
+  {amount:100,type:"debit"},
+  {amount:120,type:"credit"},
+]))
